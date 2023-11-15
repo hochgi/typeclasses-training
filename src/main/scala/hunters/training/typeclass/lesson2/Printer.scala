@@ -9,7 +9,14 @@ object Printer {
 
   implicit val intPrinter: Printer[Int] = String.valueOf
 
-  implicit def list[A : Printer]: Printer[List[A]] = ???
+  implicit def list[A : Printer]: Printer[List[A]] = {
+    val aPrinter = implicitly[Printer[A]]
+    (list: List[A]) => list.map(aPrinter.print).mkString("\n")
+  }
 
-  implicit def either[L : Printer, R : Printer]: Printer[Either[L, R]] = ???
+  implicit def either[L : Printer, R : Printer]: Printer[Either[L, R]] = {
+    val lPrinter = implicitly[Printer[L]]
+    val rPrinter = implicitly[Printer[R]]
+    (either: Either[L, R]) => either.fold(lPrinter.print, rPrinter.print)
+  }
 }
