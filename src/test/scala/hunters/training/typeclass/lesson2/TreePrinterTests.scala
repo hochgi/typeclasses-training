@@ -79,5 +79,27 @@ class TreePrinterTests extends AnyFunSpec with Matchers {
             |    5""".stripMargin
       }
     }
+    describe("recursive tree prints should be possible") {
+      it("with recursive simple tree"){
+        val s = TreePrinter.print(Tree(
+          value = Tree(42, Nil),
+          children = Nil))
+        s shouldEqual "42"
+      }
+
+      it("with recursive complex tree"){
+
+        val value: Tree[Either[Int, String]] = Tree(Left(42), List(Tree(Right("24"), Nil)))
+
+        val s = TreePrinter.print(Tree(
+          value,
+          children = List(Tree(value, Nil))))
+
+        s shouldEqual """42
+                        |└── 24
+                        |└── 42
+                        |    └── 24""".stripMargin
+      }
+    }
   }
 }

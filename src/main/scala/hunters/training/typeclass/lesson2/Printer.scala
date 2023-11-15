@@ -19,4 +19,6 @@ object Printer {
     val rPrinter = implicitly[Printer[R]]
     (either: Either[L, R]) => either.fold(lPrinter.print, rPrinter.print)
   }
+
+  implicit def tree[T : Printer]: Printer[Tree[T]] = ???
 }
