@@ -20,5 +20,5 @@ object Printer {
     (either: Either[L, R]) => either.fold(lPrinter.print, rPrinter.print)
   }
 
-  implicit def tree[T : Printer]: Printer[Tree[T]] = ???
+  implicit def tree[T : Printer]: Printer[Tree[T]] = TreePrinter.print[T]
 }
