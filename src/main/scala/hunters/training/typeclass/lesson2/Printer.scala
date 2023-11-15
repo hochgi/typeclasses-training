@@ -5,7 +5,7 @@ trait Printer[T] {
 }
 object Printer {
 
-  implicit val stringIdentityPrinter: Printer[String] = ???
+  implicit val stringIdentityPrinter: Printer[String] = identity[String]
 
-  implicit val intPrinter: Printer[Int] = ???
+  implicit val intPrinter: Printer[Int] = String.valueOf
 }
