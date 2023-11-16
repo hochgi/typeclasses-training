@@ -36,9 +36,19 @@ trait TreePrinter[T] {
 trait GenericTreePrinter {
   type Typeclass[T] = TreePrinter[T]
 
-  def join[T](ctx: ReadOnlyCaseClass[TreePrinter, T]): TreePrinter[T] = ???
+  def join[T](ctx: ReadOnlyCaseClass[TreePrinter, T]): TreePrinter[T] = (value: T) => {
+    ctx.parameters.view.map { param =>
+      val treeValue = TreePrinter.TreeValuePrinter.stringsTreePrinter.toLines(param.label)
+      val children = param.typeclass.mkTrees(param.dereference(value))
+      TreePrinter.Tree(treeValue, children)
+    }.toList
+  }
 
-  def split[T](ctx: SealedTrait[TreePrinter, T]): TreePrinter[T] = ???
+  def split[T](ctx: SealedTrait[TreePrinter, T]): TreePrinter[T] = (value: T) => {
+    ctx.split(value) { sub =>
+      sub.typeclass.mkTrees(sub.cast(value))
+    }
+  }
 
   implicit def gen[T]: TreePrinter[T] = macro Magnolia.gen[T]
 }
@@ -76,10 +86,8 @@ object TreePrinter extends GenericTreePrinter {
     }.toList
   }
 
-  /**
-   * List is a valid ADT, try to not implement this, and check the results.
-   * Then, since implicit from auto derivation has lower priority (due to implicit scope precedence),
-   * provide a manual implementation here, and compare results.
-   */
-  // implicit def listTreePrinter[T: TreePrinter]: TreePrinter[List[T]] = ???
+  implicit def listTreePrinter[T: TreePrinter]: TreePrinter[List[T]] = {
+    val treePrinter = implicitly[TreePrinter[T]]
+    (ts: List[T]) => ts.flatMap(treePrinter.mkTrees)
+  }
 }
