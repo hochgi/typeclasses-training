@@ -8,5 +8,8 @@ ThisBuild / organizationName := "hunters"
 lazy val root = (project in file("."))
   .settings(
     name := "typeclasses-training",
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.17" % Test
+    libraryDependencies ++= Seq(
+      "com.softwaremill.magnolia1_2" %% "magnolia" % "1.1.6",
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      "org.scalatest" %% "scalatest" % "3.2.17" % Test)
   )
