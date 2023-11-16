@@ -28,6 +28,10 @@ trait TreePrinter[T] {
   }
 }
 
+trait TreeValuePrinter[T] {
+  def toLines(t: T): List[String]
+}
+
 object TreePrinter {
 
   case class Tree(valueLines: List[String], children: List[Tree])
@@ -62,6 +66,12 @@ object TreePrinter {
    * But maps have 2 type parameters, and it only makes sense to require the values to have a TreePrinter typeclass.
    * The keys should be represented as Tree values. I.E: a list of strings.
    * So How can we implement the following?
+   *
+   * Solution: We need another typeclass for making a Value, i.e. [[List]] os [[String]]s
+   *
+   * Problem: For every "primitive", like [[Int]] or [[String]] we now need 2 typeclasses.
+   * 1 for Tree, the other for TreeValue.
+   * And logic is duplicated.
    */
-  implicit def mapTreePrinter[K, V: TreePrinter]: TreePrinter[Map[K, V]] = ???
+  implicit def mapTreePrinter[K: TreeValuePrinter, V: TreePrinter]: TreePrinter[Map[K, V]] = ???
 }
