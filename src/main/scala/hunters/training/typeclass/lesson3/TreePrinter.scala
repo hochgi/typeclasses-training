@@ -31,6 +31,12 @@ trait TreePrinter[T] {
 trait TreeValuePrinter[T] {
   def toLines(t: T): List[String]
 }
+object TreeValuePrinter {
+
+  implicit val intsTreePrinter: TreeValuePrinter[Int] = ???
+
+  implicit val stringsTreePrinter: TreeValuePrinter[String] = ???
+}
 
 object TreePrinter {
 
@@ -43,9 +49,7 @@ object TreePrinter {
 
   implicit val treeTreePrinter: TreePrinter[Tree] = identity[Tree]
 
-  implicit val intsTreePrinter: TreePrinter[Int] = (i: Int) => Tree(String.valueOf(i) :: Nil, Nil)
-
-  implicit val stringsTreePrinter: TreePrinter[String] = (s: String) => Tree(s.linesIterator.toList, Nil)
+  implicit def singleNodeTree[T: TreeValuePrinter]: TreePrinter[T] = ???
 
   implicit def tuple2TreePrinter[A: TreePrinter, B: TreePrinter]: TreePrinter[(A, B)] = {
     val tupleValueLines: List[String] = List(classOf[(_, _)].getSimpleName)
@@ -72,6 +76,8 @@ object TreePrinter {
    * Problem: For every "primitive", like [[Int]] or [[String]] we now need 2 typeclasses.
    * 1 for Tree, the other for TreeValue.
    * And logic is duplicated.
+   *
+   * Solution: We'll implement TreePrinter constructor from TreeValuePrinter typeclass just once
    */
   implicit def mapTreePrinter[K: TreeValuePrinter, V: TreePrinter]: TreePrinter[Map[K, V]] = ???
 }
