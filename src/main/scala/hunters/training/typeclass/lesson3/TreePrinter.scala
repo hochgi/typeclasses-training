@@ -56,4 +56,12 @@ object TreePrinter {
           bTreePrinter.mkTree(t._2)))
     }
   }
+
+  /**
+   * Problem: we would want to make a typeclass constructor for Maps.
+   * But maps have 2 type parameters, and it only makes sense to require the values to have a TreePrinter typeclass.
+   * The keys should be represented as Tree values. I.E: a list of strings.
+   * So How can we implement the following?
+   */
+  implicit def mapTreePrinter[K, V: TreePrinter]: TreePrinter[Map[K, V]] = ???
 }
