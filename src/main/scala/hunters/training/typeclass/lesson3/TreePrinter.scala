@@ -1,8 +1,5 @@
 package hunters.training.typeclass.lesson3
 
-import scala.collection.immutable
-
-
 /**
  * To make [[TreePrinter]]s even more composable and simple,
  * instead of forcing library users to know (and use) [[TreePrinter.Tree]],
@@ -11,11 +8,15 @@ import scala.collection.immutable
  */
 trait TreePrinter[T] {
 
-  def print(t: T): String = ???
+  def print(t: T): String = mkTrees(t) match {
+    case Nil => ""
+    case oneTree :: Nil => toLines(oneTree).mkString("\n")
+    case nonEmptyForest => toLines(TreePrinter.Tree("." :: Nil, nonEmptyForest)).mkString("\n")
+  }
 
-  def contramap[U](f: U => T): TreePrinter[U] = (u: U) => mkTree(f(u))
+  def contramap[U](f: U => T): TreePrinter[U] = (u: U) => mkTrees(f(u))
 
-  protected def mkTree(t: T): TreePrinter.Tree
+  protected def mkTrees(t: T): List[TreePrinter.Tree]
 
   private def toLines(subtree: TreePrinter.Tree): List[String] = subtree match {
     case TreePrinter.Tree(lines, Nil) => lines
@@ -49,13 +50,34 @@ object TreePrinter {
   // TODO: #1 - write TreePrinters for all primitives
   // TODO: #2 - Augment with typeclass constructors for stdlib constructs (collections, Option, Try, Either, Tuples, ...)
 
-  implicit val treeTreePrinter: TreePrinter[Tree] = ???
+  implicit val treeTreePrinter: TreePrinter[Tree] = _ :: Nil
 
-  implicit def singleNodeTree[T: TreeValuePrinter]: TreePrinter[T] = ???
+  implicit def singleNodeTree[T: TreeValuePrinter]: TreePrinter[T] = treeTreePrinter.contramap { (t: T) =>
+    Tree(implicitly[TreeValuePrinter[T]].toLines(t), Nil)
+  }
 
-  implicit def tuple2TreePrinter[A: TreePrinter, B: TreePrinter]: TreePrinter[(A, B)] = ???
+  implicit def tuple2TreePrinter[A: TreePrinter, B: TreePrinter]: TreePrinter[(A, B)] = {
+    val aTreePrinter: TreePrinter[A] = implicitly[TreePrinter[A]]
+    val bTreePrinter: TreePrinter[B] = implicitly[TreePrinter[B]]
 
-  implicit def tuple3TreePrinter[A: TreePrinter, B: TreePrinter, C: TreePrinter]: TreePrinter[(A, B, C)] = ???
+    new TreePrinter[(A, B)] {
+      override protected def mkTrees(t: (A, B)): List[Tree] = {
+        aTreePrinter.mkTrees(t._1) ::: bTreePrinter.mkTrees(t._2)
+      }
+    }
+  }
+
+  implicit def tuple3TreePrinter[A: TreePrinter, B: TreePrinter, C: TreePrinter]: TreePrinter[(A, B, C)] = {
+    val aTreePrinter: TreePrinter[A] = implicitly[TreePrinter[A]]
+    val bTreePrinter: TreePrinter[B] = implicitly[TreePrinter[B]]
+    val cTreePrinter: TreePrinter[C] = implicitly[TreePrinter[C]]
+
+    new TreePrinter[(A, B, C)] {
+      override protected def mkTrees(t: (A, B, C)): List[Tree] = {
+        aTreePrinter.mkTrees(t._1) ::: bTreePrinter.mkTrees(t._2) ::: cTreePrinter.mkTrees(t._3)
+      }
+    }
+  }
 
   /**
    * Problem: we would want to make a typeclass constructor for Maps.
@@ -76,19 +98,17 @@ object TreePrinter {
    * In the tuple example we worked around it by adding a synthetic key that is the type name ("Tuple2").
    * Going forward, we want to be able to render un-rooted trees. or "forest" if you will, which will help use implement
    * map derivation functionality properly.
+   *
+   * Solution: make the abstract protected def in the typeclass to allow for rootless forest (i.e. [[List]]).
    */
   implicit def mapTreePrinter[K: TreeValuePrinter, V: TreePrinter]: TreePrinter[Map[K, V]] = {
     val kTreeValuePrinter = implicitly[TreeValuePrinter[K]]
     val vTreePrinter = implicitly[TreePrinter[V]]
 
     new TreePrinter[Map[K, V]] {
-      override protected def mkTree(m: Map[K, V]): Tree = {
-        val subtrees: immutable.Iterable[Tree] = m.map { case (k, v) =>
-          Tree(kTreeValuePrinter.toLines(k), vTreePrinter.mkTree(v) :: Nil)
-        }
-
-        ???
-      }
+      override protected def mkTrees(m: Map[K, V]): List[Tree] = m.view.map { case (k, v) =>
+          Tree(kTreeValuePrinter.toLines(k), vTreePrinter.mkTrees(v))
+      }.toList
     }
   }
 }
