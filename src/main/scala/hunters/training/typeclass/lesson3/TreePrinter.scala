@@ -9,9 +9,9 @@ package hunters.training.typeclass.lesson3
  */
 trait TreePrinter[T] {
 
-  def print(t: T): String = ???
+  def print(t: T): String = toLines(mkTree(t)).mkString("\n")
 
-  def contramap[U](f: U => T): TreePrinter[U] = ???
+  def contramap[U](f: U => T): TreePrinter[U] = (u: U) => mkTree(f(u))
 
   protected def mkTree(t: T): TreePrinter.Tree
 
@@ -32,18 +32,18 @@ object TreePrinter {
 
   case class Tree(valueLines: List[String], children: List[Tree])
 
-  def printTree[T : TreePrinter](t: T): String = ???
+  def printTree[T : TreePrinter](t: T): String = implicitly[TreePrinter[T]].print(t)
 
   // TODO: #1 - write TreePrinters for all primitives
   // TODO: #2 - Augment with typeclass constructors for stdlib constructs (collections, Option, Try, Either, Tuples, ...)
 
-  implicit val treeTreePrinter: TreePrinter[Tree] = ???
+  implicit val treeTreePrinter: TreePrinter[Tree] = identity[Tree]
 
   implicit val intsTreePrinter: TreePrinter[Int] = (i: Int) => Tree(String.valueOf(i) :: Nil, Nil)
 
   implicit val stringsTreePrinter: TreePrinter[String] = (s: String) => Tree(s.linesIterator.toList, Nil)
 
-  implicit def tuple2TreePrinter[A : TreePrinter, B : TreePrinter]: TreePrinter[(A, B)] = {
+  implicit def tuple2TreePrinter[A: TreePrinter, B: TreePrinter]: TreePrinter[(A, B)] = {
     val tupleValueLines: List[String] = List(classOf[(_, _)].getSimpleName)
     val aTreePrinter: TreePrinter[A] = implicitly[TreePrinter[A]]
     val bTreePrinter: TreePrinter[B] = implicitly[TreePrinter[B]]
